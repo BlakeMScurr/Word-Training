@@ -1,0 +1,257 @@
+<script type="text/javascript">
+    function start() {
+        document.getElementById("app").style.visibility = "visible";
+        ask()
+        renderResults()
+    }
+
+    var correct_index = "";
+    var correct_word = "";
+    var words = [];
+    var results = new Map();
+    var target_streak = 3;
+    var mistake_count = 0;
+
+    function ask() {
+        // Hide the Go button while playing
+        document.getElementById("start").style.visibility = "hidden";
+
+        // Reset button colors if there was an incorrect answer
+        var buttons = document.getElementsByClassName("wordchoice")
+        for (let i = 0; i < 3; i++) {
+            buttons[i].style.background = "";
+        }
+
+        // parse the word list
+        var text = document.getElementById("wordlist").value
+        text = text.trim()
+        word_list = text.split("\n")
+
+        if (word_list.length < 3) {
+            alert("Not enough words in the word list to start: you need at least 3")
+            return;
+        }
+
+        // Pick random words
+        // we construct a distribution that favours words with lower streaks
+        var distribution = []
+        if (results.size === 0) {
+            word_list.forEach((word) => {
+                results.set(word, 0);
+            })
+        }
+        
+        results.forEach((streak, word) => {
+            let count = 10 * (target_streak - streak) + 1;
+            for (let i = 0; i < count; i++) {
+                distribution.push(word) // TODO: use a less ridiculously memory hungry method - this doesn't scale well
+            }
+        })
+
+        words = []
+
+        while (words.length < 3) {
+            var new_word = distribution[Math.floor(Math.random() * distribution.length)];
+            if (!words.includes(new_word)) {
+                words.push(new_word);
+            }
+        }
+
+        // Display the words on buttons
+        for (let i = 0; i < 3; i++) {
+            buttons[i].innerText = words[i];
+        }
+
+        // randomly choose correct word
+        correct_index = Math.floor(Math.random() * 3)
+        correct_word = words[correct_index]
+
+        // Say the word out loud
+        speechSynthesis.speak(new SpeechSynthesisUtterance(correct_word))
+    }
+
+    // color palette chosen to be colorblind friendly: https://davidmathlogic.com/colorblind/#%236DFF6D-%23AB2701-%23000000-%23000000
+    var green = "#6DFF6D"
+    var red = "#AB2701"
+
+    function answer(chosen_index) {
+        var button = document.getElementsByClassName("wordchoice")[chosen_index]
+        var wait_time;
+        if (chosen_index === correct_index) {
+                button.style.background = green;
+                setTimeout(() => {
+                button.style.background = green;
+                ask()
+            }, 500)
+        } else {
+            document.getElementsByClassName("wordchoice")[correct_index].style.background = green;
+            button.style.background = red;
+            document.getElementById("start").style.visibility = "visible";
+        }
+
+        // record result
+        if (!results.get(correct_word)) {
+            results.set(correct_word, 0)
+        }
+        if (chosen_index === correct_index) {
+            results.set(correct_word, results.get(correct_word) + 1)
+        } else {
+            results.set(correct_word, 0)
+            mistake_count++;
+        }
+
+        renderResults()
+    }
+
+    document.onkeypress = function (e) {
+        e = e || window.event;
+        let m = new Map([
+            ["1", 0],
+            ["2", 1],
+            ["3", 2],
+        ])
+        
+        var selection = m.get(e.key);
+        if (typeof selection !== "undefined") {
+            answer(selection)
+        }
+    };
+
+    function explain(button) {
+        var text = button.parentNode.textContent
+        text = text.substring(0, text.length -2) // trim the loudspeaker character
+        speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+    }
+
+    function goToTab(num) {
+        var tabs = document.getElementsByClassName("tab");
+        for (let i = 0; i < tabs.length; i++) {
+            if (num === i) {
+                tabs[i].style.display = "block";
+            } else {
+                tabs[i].style.display = "none";
+            }
+            
+        }
+    }
+
+    var width = 30;
+    function renderResults() {
+        word_list.forEach((word) => {
+            if (!results.get(word)) {
+                results.set(word, 0);
+            }
+        })
+
+        let text = "";
+        results.forEach((streak, word) => {
+            text += word + " ✅".repeat(streak) + "\n";
+        })
+
+        var plural = mistake_count === 1 ? "mistake" : "mistakes";
+        text += "\n\n"+ mistake_count + " " + plural + " " + "❌".repeat(mistake_count);
+        document.getElementById("results").innerText = text;
+    }
+</script>
+
+<h1>Word Training!</h1>
+
+<nav>
+    <div class="nav_option" onclick="goToTab(0)">Play</div>
+    <div class="nav_option" onclick="goToTab(1)">About</div>
+    <div class="nav_option" onclick="goToTab(2)">Settings</div>
+</nav>
+
+<br>
+
+<div id="play" class="tab">
+    <button id="start" onclick="start()">Go!</button>
+
+    <br>
+    <br>
+    <br>
+
+    <div id="app">
+        <button class="wordchoice" onclick="answer(0)">Word 1</button>
+        <button class="wordchoice" onclick="answer(1)">Word 2</button>
+        <button class="wordchoice" onclick="answer(2)">Word 3</button>
+        <br>
+        <br>
+    </div>
+
+    <p id="results"></p>
+</div>
+
+<div id="about" class="tab">
+    <div>
+        <div>
+            <p class="explanation">This tool trains you to recognise words instantly and is aimed at students who are learning to read or struggling with dyslexia. <button class="explain" onclick="explain(this)">📢</button></p>
+            <p class="explanation">The computer will say a word, and you select the word on the page you have heard. <button class="explain" onclick="explain(this)">📢</button></p>
+            <p class="explanation">You can choose a word by clicking on it or using the numbers 1, 2, and 3 on your keyboard. <button class="explain" onclick="explain(this)">📢</button></p>
+            <p class="explanation">Once you've recognised each word correctly 3 times in a row, you are finished. <button class="explain" onclick="explain(this)">📢</button></p>
+        </div>
+    </div>
+</div>
+
+<div id="settings" class="tab">
+    <p class="explanation">Write the words and phrases you want to learn below. <button class="explain" onclick="explain(this)">📢</button></p>
+
+    <textarea id="wordlist" cols="30" rows="20">
+and
+the
+them
+then
+that
+who
+what
+when
+where
+    </textarea>
+</div>
+
+
+
+
+
+<style>
+    .wordchoice {
+        max-width: 200px;
+        width: 30%;
+        height: 100px;
+        font-size: large;
+    }
+
+    #app {
+        visibility: hidden;
+    }
+
+    .explaination {
+        display: inline;
+    }
+
+    .nav_option {
+        width: 30%;
+        display:inline-block;
+        font-size: large;
+        border-bottom: 1px solid black;
+    }
+
+    .nav_option:hover {
+        background-color: gainsboro;
+        cursor: pointer;
+    }
+
+    #settings {
+        display: none;
+    }
+
+    #about {
+        display: none;
+    }
+
+    #start {
+        width: 70px;
+        height: 50px;
+        font-size: 20px;
+    }
+</style>
