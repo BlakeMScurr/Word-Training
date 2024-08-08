@@ -1,5 +1,20 @@
 <script type="text/javascript">
-    function start() {
+    word_list = []
+    function start(list_number, section_number) {
+        if (list_number === -1) {
+            // handle custom game
+            var text = document.getElementById("wordlist").value
+            text = text.trim()
+            word_list = text.split("\n")
+
+            if (word_list.length < 3) {
+                alert("Not enough words in the custom word list to start: you need at least 3")
+                return;
+            }
+        } else {
+            const start = (section_number - 1) * 10;
+            word_list = lists[list_number-1].slice(start, start + 10)
+        }
         document.getElementById("app").style.visibility = "visible";
         ask()
         renderResults()
@@ -26,22 +41,12 @@
 
     function ask() {
         // Hide the Go button while playing
-        document.getElementById("start").style.visibility = "hidden";
+        document.getElementById("levels").style.display = "none";
 
         // Reset button colors if there was an incorrect answer
         var buttons = document.getElementsByClassName("wordchoice")
         for (let i = 0; i < 3; i++) {
             buttons[i].style.background = "";
-        }
-
-        // parse the word list
-        var text = document.getElementById("wordlist").value
-        text = text.trim()
-        word_list = text.split("\n")
-
-        if (word_list.length < 3) {
-            alert("Not enough words in the word list to start: you need at least 3")
-            return;
         }
 
         // Pick random words
@@ -75,11 +80,22 @@
         }
 
         // randomly choose correct word
-        correct_index = Math.floor(Math.random() * 3)
-        correct_word = words[correct_index]
+        var dist2 = []
+        for (let i = 0; i < 3; i++) {
+            let count = Math.max(target_streak - results.get(words[i]), 0) + 1;
+            for (let j = 0; j < count; j++) {
+                dist2.push(words[i])
+            }
+        }
+        correct_word = dist2[Math.floor(Math.random() * dist2.length)]
+        correct_index = words.indexOf(correct_word)
 
         // Say the word out loud
-        speechSynthesis.speak(new SpeechSynthesisUtterance(correct_word))
+        var w = correct_word;
+        if (w === "I") {
+            w = "i"; // the speech synthesis tends to pronounce "I" as "capital I"
+        }
+        speechSynthesis.speak(new SpeechSynthesisUtterance(w))
     }
 
     // color palette chosen to be colorblind friendly: https://davidmathlogic.com/colorblind/#%236DFF6D-%23AB2701-%23000000-%23000000
@@ -98,11 +114,12 @@
                     }
                 }
                 alert("Congratulations! You finished!");
+                cleanup()
             }, 500)
         } else {
             document.getElementsByClassName("wordchoice")[correct_index].style.background = green;
             button.style.background = red;
-            document.getElementById("start").style.visibility = "visible";
+            document.getElementById("continue").style.visibility = "visible";
         }
 
         // record result
@@ -165,8 +182,18 @@
         })
 
         var plural = mistake_count === 1 ? "mistake" : "mistakes";
-        text += "\n\n"+ mistake_count + " " + plural + " " + "❌".repeat(mistake_count);
+        if (mistake_count > 0) text += "\n\n"+ mistake_count + " " + plural + " " + "❌".repeat(mistake_count);
         document.getElementById("results").innerText = text;
+    }
+
+    function cleanup() {
+        goToTab(0)
+        word_list = []
+        results = new Map()
+        mistake_count = 0
+        renderResults()
+        document.getElementById("levels").style.display = "block"
+        document.getElementById("app").style.visibility = "hidden"
     }
 </script>
 
@@ -181,9 +208,72 @@
 <br>
 
 <div id="play" class="tab">
-    <button id="start" onclick="start()">Go!</button>
+    <div id="levels">
+        <div>
+            <button class="start list1" onclick="start(1, 1)">1A</button>
+        </div>
+
+        <div>
+            <button class="start list2" onclick="start(2, 1)">2A</button>
+            <button class="start list2" onclick="start(2, 2)">2B</button>
+        </div>
+
+        <div>
+            <button class="start list3" onclick="start(3, 1)">3A</button>
+            <button class="start list3" onclick="start(3, 2)">3B</button>
+            <button class="start list3" onclick="start(3, 3)">3C</button>
+        </div>
+
+        <div>
+            <button class="start list4" onclick="start(4, 1)">4A</button>
+            <button class="start list4" onclick="start(4, 2)">4B</button>
+            <button class="start list4" onclick="start(4, 3)">4C</button>
+            <button class="start list4" onclick="start(4, 4)">4D</button>
+            <button class="start list4" onclick="start(4, 5)">4E</button>
+        </div>
+
+        <div>
+            <button class="start list5" onclick="start(5, 1)">5A</button>
+            <button class="start list5" onclick="start(5, 2)">5B</button>
+            <button class="start list5" onclick="start(5, 3)">5C</button>
+            <button class="start list5" onclick="start(5, 4)">5D</button>
+            <button class="start list5" onclick="start(5, 5)">5E</button>
+        </div>
+
+        <div>
+            <button class="start list6" onclick="start(6, 1)">6A</button>
+            <button class="start list6" onclick="start(6, 2)">6B</button>
+            <button class="start list6" onclick="start(6, 3)">6C</button>
+            <button class="start list6" onclick="start(6, 4)">6D</button>
+            <button class="start list6" onclick="start(6, 5)">6E</button>
+            <button class="start list6" onclick="start(6, 6)">6F</button>
+            <button class="start list6" onclick="start(6, 7)">6G</button>
+        </div>
+
+        <div>
+            <button class="start list7" onclick="start(7, 1)">7A</button>
+            <button class="start list7" onclick="start(7, 2)">7B</button>
+            <button class="start list7" onclick="start(7, 3)">7C</button>
+            <button class="start list7" onclick="start(7, 4)">7D</button>
+            <button class="start list7" onclick="start(7, 5)">7E</button>
+            <button class="start list7" onclick="start(7, 6)">7F</button>
+        </div>
+
+        <div>
+            <button class="start list8" onclick="start(8, 1)">8A</button>
+            <button class="start list8" onclick="start(8, 2)">8B</button>
+            <button class="start list8" onclick="start(8, 3)">8C</button>
+            <button class="start list8" onclick="start(8, 4)">8D</button>
+            <button class="start list8" onclick="start(8, 5)">8E</button>
+            <button class="start list8" onclick="start(8, 6)">8F</button>
+        </div>
+    </div>
 
     <br>
+    <button id="continue" onclick="(() => {
+        this.style.visibility = 'hidden';
+        ask()
+    })()">continue</button>
     <br>
     <br>
 
@@ -191,6 +281,7 @@
         <button class="wordchoice" onclick="answer(0)">Word 1</button>
         <button class="wordchoice" onclick="answer(1)">Word 2</button>
         <button class="wordchoice" onclick="answer(2)">Word 3</button>
+
         <br>
         <br>
     </div>
@@ -223,6 +314,13 @@ what
 when
 where
 </textarea>
+<br>
+<br>
+<button id="startcustom" onclick="(() => {
+    cleanup();
+    start(-1, 0);
+    goToTab(0);
+})()">Start Custom</button>
 </div>
 
 
@@ -263,9 +361,54 @@ where
         display: none;
     }
 
-    #start {
+    .start {
         width: 70px;
         height: 50px;
         font-size: 20px;
+        margin: 1px;
+    }
+
+    .start:hover {
+        cursor: pointer;
+    }
+
+    .list1 {
+        background-color: blue;
+    }
+
+    .list2 {
+        background-color: red;
+    }
+
+    .list3 {
+        background-color: yellow;
+    }
+
+    .list4 {
+        background-color: green;
+    }
+
+    .list5 {
+        background-color: magenta;
+    }
+
+    .list6 {
+        background-color: orange;
+    }
+
+    .list7 {
+        background-color: purple;
+    }
+    
+    .list8 {
+        background-color: grey;
+    }
+
+    #continue {
+        font-size: larger;
+        visibility: hidden;
+    }
+    #startcustom {
+        font-size: larger;
     }
 </style>
