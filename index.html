@@ -42,7 +42,7 @@
         }
         
         results.forEach((streak, word) => {
-            let count = 10 * (target_streak - streak) + 1;
+            let count = 10 * Math.max(target_streak - streak, 0) + 1;
             for (let i = 0; i < count; i++) {
                 distribution.push(word) // TODO: use a less ridiculously memory hungry method - this doesn't scale well
             }
@@ -76,12 +76,16 @@
 
     function answer(chosen_index) {
         var button = document.getElementsByClassName("wordchoice")[chosen_index]
-        var wait_time;
         if (chosen_index === correct_index) {
-                button.style.background = green;
-                setTimeout(() => {
-                button.style.background = green;
-                ask()
+            button.style.background = green;
+            setTimeout(() => {
+                for (const [_, streak] of results.entries()) {
+                    if (streak < target_streak) {
+                        ask()
+                        return;
+                    }
+                }
+                alert("Congratulations! You finished!");
             }, 500)
         } else {
             document.getElementsByClassName("wordchoice")[correct_index].style.background = green;
@@ -206,10 +210,8 @@ who
 what
 when
 where
-    </textarea>
+</textarea>
 </div>
-
-
 
 
 
