@@ -38,8 +38,11 @@
     var results = new Map();
     var target_streak = 3;
     var mistake_count = 0;
+    var answered = false;
 
     function ask() {
+        answered = false
+
         // Hide the Go button while playing
         document.getElementById("levels").style.display = "none";
 
@@ -103,6 +106,7 @@
     var red = "#AB2701"
 
     function answer(chosen_index) {
+        if (answered) return;
         var button = document.getElementsByClassName("wordchoice")[chosen_index]
         if (chosen_index === correct_index) {
             button.style.background = green;
@@ -120,6 +124,7 @@
             document.getElementsByClassName("wordchoice")[correct_index].style.background = green;
             button.style.background = red;
             document.getElementById("continue").style.visibility = "visible";
+            answered = true;
         }
 
         // record result
@@ -273,7 +278,7 @@
     <button id="continue" onclick="(() => {
         this.style.visibility = 'hidden';
         ask()
-    })()">continue</button>
+    })()">Continue</button>
     <br>
     <br>
 
@@ -344,6 +349,9 @@ where
         display:inline-block;
         font-size: large;
         border-bottom: 1px solid black;
+        h2 {
+            margin: 5px;
+        }
     }
 
     .nav_option:hover {
@@ -406,6 +414,7 @@ where
     #continue {
         font-size: larger;
         visibility: hidden;
+        padding: 10px;
     }
     #startcustom {
         font-size: larger;
